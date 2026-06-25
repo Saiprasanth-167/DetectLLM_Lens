@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DetectLens — AI Text Detection Platform</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="DetectLens_Premium_UI.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="logo-text">DetectLens</span>
+        </div>
+        <span class="version-badge">v2.0</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-group-label">Analysis</div>
+        <a class="nav-item active" data-page="detector" onclick="showPage('detector',this)">
+          <i class="fa-regular fa-magnifying-glass"></i> Detector
+        </a>
+        <a class="nav-item" data-page="training" onclick="showPage('training',this)">
+          <i class="fa-regular fa-brain"></i> Training Hub
+        </a>
+        <a class="nav-item" data-page="benchmark" onclick="showPage('benchmark',this)">
+          <i class="fa-regular fa-chart-mixed"></i> Benchmark
+        </a>
+        <div class="nav-group-label">Insights</div>
+        <a class="nav-item" data-page="reports" onclick="showPage('reports',this)">
+          <i class="fa-regular fa-file-lines"></i> Reports
+        </a>
+        <a class="nav-item" data-page="about" onclick="showPage('about',this)">
+          <i class="fa-regular fa-circle-info"></i> About
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="model-status">
+          <div class="status-dot active"></div>
+          <span>Ensemble ready</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+      <!-- TOP BAR -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn" onclick="toggleSidebar()" title="Toggle sidebar">
+            <i class="fa-regular fa-sidebar"></i>
+          </button>
+          <div class="breadcrumb" id="breadcrumb">Detector</div>
+        </div>
+        <div class="topbar-right">
+          <div class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+            <i class="fa-regular fa-moon" id="theme-icon"></i>
+          </div>
+          <div class="topbar-divider"></div>
+          <div class="accuracy-pill">
+            <div class="status-dot active"></div>
+            <span id="model-acc">Accuracy: ~89.4%</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- PAGES -->
+      <div class="page-container">
+
+        <!-- ========== DETECTOR PAGE ========== -->
+        <div class="page active" id="page-detector">
+          <div class="page-header">
+            <h1>AI Text Detection</h1>
+            <p>Research-grade ensemble analysis with sentence-level explainability</p>
+          </div>
+
+          <div class="detector-layout">
+            <div class="detector-left">
+              <!-- Mode selector -->
+              <div class="mode-strip">
+                <button class="mode-btn active" onclick="setMode('single',this)">
+                  <i class="fa-regular fa-text"></i> Single
+                </button>
+                <button class="mode-btn" onclick="setMode('paragraph',this)">
+                  <i class="fa-regular fa-paragraph"></i> Paragraph
+                </button>
+                <button class="mode-btn" onclick="setMode('compare',this)">
+                  <i class="fa-regular fa-code-compare"></i> Compare
+                </button>
+              </div>
+
+              <!-- Input area -->
+              <div class="input-card">
+                <div class="input-header">
+                  <label class="input-label">Input text</label>
+                  <span class="char-count" id="char-count">0 chars</span>
+                </div>
+                <textarea
+                  id="input-text"
+                  class="text-input"
+                  placeholder="Paste text here to analyze for AI generation patterns…"
+                  oninput="onInput(this)"
+                  spellcheck="false"
+                ></textarea>
+
+                <div id="compare-panel" class="compare-panel" style="display:none">
+                  <div class="compare-divider">
+                    <span>vs</span>
+                  </div>
+                  <textarea
+                    id="input-text2"
+                    class="text-input"
+                    placeholder="Second text to compare (will be labeled as AI-generated)…"
+                    spellcheck="false"
+                  ></textarea>
+                </div>
+
+                <div class="input-footer">
+                  <div class="detector-options">
+                    <label class="toggle-label">
+                      <input type="checkbox" id="opt-sentence" checked />
+                      <span class="toggle-switch"></span>
+                      Sentence analysis
+                    </label>
+                    <label class="toggle-label">
+                      <input type="checkbox" id="opt-stylo" checked />
+                      <span class="toggle-switch"></span>
+                      Stylometrics
+                    </label>
+                    <label class="toggle-label">
+                      <input type="checkbox" id="opt-explain" checked />
+                      <span class="toggle-switch"></span>
+                      Explainability
+                    </label>
+                  </div>
+                  <button class="btn-analyze" id="analyze-btn" onclick="analyze()" disabled>
+                    <i class="fa-regular fa-wand-magic-sparkles"></i>
+                    <span>Analyze</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Analyzing state -->
+              <div class="analyzing-state" id="analyzing-state" style="display:none">
+                <div class="analyzing-orb"></div>
+                <div class="analyzing-text">
+                  <div class="analyzing-title" id="analyzing-step">Running DetectLLM…</div>
+                  <div class="analyzing-sub">Ensemble analysis in progress</div>
+                </div>
+                <div class="analyzing-progress">
+                  <div class="analyzing-bar" id="analyzing-bar"></div>
+                </div>
+              </div>
+
+              <!-- RESULTS -->
+              <div id="results-area" style="display:none">
+
+                <!-- Score overview -->
+                <div class="score-overview" id="score-overview"></div>
+
+                <!-- Gauge -->
+                <div class="gauge-card">
+                  <div class="gauge-wrap">
+                    <canvas id="gaugeChart" width="260" height="140"></canvas>
+                    <div class="gauge-label" id="gauge-label">
+                      <div class="gauge-pct" id="gauge-pct">—</div>
+                      <div class="gauge-sub" id="gauge-sub">AI probability</div>
+                    </div>
+                  </div>
+                  <div class="gauge-legend">
+                    <span class="gl-item"><span class="gl-dot human"></span>Human</span>
+                    <span class="gl-item"><span class="gl-dot mixed"></span>Mixed</span>
+                    <span class="gl-item"><span class="gl-dot ai"></span>AI</span>
+                  </div>
+                </div>
+
+                <!-- Sentence heatmap -->
+                <div class="card" id="sentence-card" style="display:none">
+                  <div class="card-head">
+                    <i class="fa-regular fa-highlighter card-icon"></i>
+                    <span>Sentence heatmap</span>
+                    <div class="heatmap-legend">
+                      <span><span class="hl-dot hl-green"></span>Human</span>
+                      <span><span class="hl-dot hl-amber"></span>Mixed</span>
+                      <span><span class="hl-dot hl-red"></span>AI</span>
+                    </div>
+                  </div>
+                  <div id="heatmap-content"></div>
+                </div>
+
+                <!-- Two-col: ensemble + explainability -->
+                <div class="two-col">
+                  <div class="card">
+                    <div class="card-head">
+                      <i class="fa-regular fa-chart-pie card-icon"></i>
+                      <span>Ensemble breakdown</span>
+                    </div>
+                    <div class="chart-wrap" style="height:200px">
+                      <canvas id="ensembleChart" role="img" aria-label="Ensemble detector score breakdown"></canvas>
+                    </div>
+                  </div>
+
+                  <div class="card">
+                    <div class="card-head">
+                      <i class="fa-regular fa-microscope card-icon"></i>
+                      <span>Why this score?</span>
+                    </div>
+                    <div id="expl-list"></div>
+                  </div>
+                </div>
+
+                <!-- Stylometrics -->
+                <div class="card" id="stylo-card">
+                  <div class="card-head">
+                    <i class="fa-regular fa-wave-pulse card-icon"></i>
+                    <span>Stylometric features</span>
+                    <span class="card-badge" id="stylo-risk-badge"></span>
+                  </div>
+                  <div id="stylo-content"></div>
+                </div>
+
+                <!-- Research note -->
+                <div class="research-note">
+                  <i class="fa-regular fa-flask"></i>
+                  <span><strong>Research note:</strong> No detector achieves perfect accuracy. False positives and negatives are expected as modern LLMs produce increasingly human-like text. Confidence scores reflect ensemble uncertainty, not ground truth.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT PANEL: recent analyses -->
+            <div class="detector-right">
+              <div class="panel-head">Recent analyses</div>
+              <div id="recent-list">
+                <div class="empty-panel">
+                  <i class="fa-regular fa-clock-rotate-left"></i>
+                  <span>No analyses yet</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== TRAINING HUB PAGE ========== -->
+        <div class="page" id="page-training" style="display:none">
+          <div class="page-header">
+            <h1>Training Hub</h1>
+            <p>Upload and train on one or many datasets — runs in background with real-time progress</p>
+          </div>
+
+          <div class="training-layout">
+            <!-- Upload zone -->
+            <div class="card upload-zone" id="upload-zone"
+              ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+              onclick="document.getElementById('file-input').click()">
+              <div class="upload-icon">
+                <i class="fa-regular fa-cloud-arrow-up"></i>
+              </div>
+              <div class="upload-title">Drop datasets here or click to browse</div>
+              <div class="upload-sub">Supports CSV, JSON, TXT — columns: <code>text</code>, <code>label</code> (0=human, 1=AI)</div>
+              <div class="upload-sub">Train on 1 to 100+ datasets simultaneously</div>
+              <div class="upload-tags">
+                <span class="format-tag">CSV</span>
+                <span class="format-tag">JSON</span>
+                <span class="format-tag">TXT</span>
+              </div>
+              <input type="file" id="file-input" style="display:none" multiple accept=".csv,.json,.txt" onchange="handleFiles(this.files)" />
+            </div>
+
+            <!-- Dataset queue -->
+            <div id="dataset-queue" style="display:none">
+              <div class="queue-header">
+                <div class="queue-title-row">
+                  <span class="queue-title" id="queue-title">0 datasets queued</span>
+                  <div class="queue-actions">
+                    <button class="btn-sm" onclick="clearQueue()"><i class="fa-regular fa-trash"></i> Clear all</button>
+                    <button class="btn-sm btn-sm-primary" id="train-btn" onclick="startTraining()">
+                      <i class="fa-regular fa-play"></i> Start training
+                    </button>
+                  </div>
+                </div>
+                <!-- Global progress -->
+                <div class="global-progress-card" id="global-progress" style="display:none">
+                  <div class="gp-row">
+                    <div class="gp-title" id="gp-title">Training…</div>
+                    <div class="gp-pct" id="gp-pct">0%</div>
+                  </div>
+                  <div class="gp-bar-bg">
+                    <div class="gp-bar-fill" id="gp-bar"></div>
+                  </div>
+                  <div class="gp-sub" id="gp-sub">Preparing datasets…</div>
+                </div>
+              </div>
+
+              <div id="file-list" class="file-list"></div>
+            </div>
+
+            <!-- Training results -->
+            <div id="training-results" style="display:none">
+              <div class="card">
+                <div class="card-head">
+                  <i class="fa-regular fa-trophy card-icon"></i>
+                  <span>Training complete</span>
+                  <span class="card-badge success-badge" id="train-complete-badge"></span>
+                </div>
+                <div class="result-grid" id="train-metrics"></div>
+                <div class="chart-wrap" style="height:220px;margin-top:16px">
+                  <canvas id="trainLossChart" role="img" aria-label="Training loss curve"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== BENCHMARK PAGE ========== -->
+        <div class="page" id="page-benchmark" style="display:none">
+          <div class="page-header">
+            <h1>Benchmark Evaluation</h1>
+            <p>Upload a labeled dataset to generate research-grade evaluation metrics</p>
+          </div>
+
+          <div class="benchmark-layout">
+            <div class="card upload-zone-sm" onclick="document.getElementById('bench-input').click()">
+              <i class="fa-regular fa-upload" style="font-size:24px;color:var(--accent)"></i>
+              <div style="margin-top:8px;font-weight:500">Upload benchmark dataset</div>
+              <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">CSV or JSON with text + label columns</div>
+              <input type="file" id="bench-input" style="display:none" accept=".csv,.json,.txt" onchange="runBenchmark(this)" />
+            </div>
+
+            <div id="bench-results" style="display:none">
+              <div class="result-grid" id="bench-metrics"></div>
+              <div class="two-col" style="margin-top:16px">
+                <div class="card">
+                  <div class="card-head"><i class="fa-regular fa-chart-line card-icon"></i><span>ROC curve</span></div>
+                  <div class="chart-wrap" style="height:230px"><canvas id="rocChart" role="img" aria-label="ROC curve"></canvas></div>
+                </div>
+                <div class="card">
+                  <div class="card-head"><i class="fa-regular fa-table-cells card-icon"></i><span>Confusion matrix</span></div>
+                  <div id="cm-grid" class="cm-grid"></div>
+                  <div class="cm-axis-label">← Predicted →</div>
+                </div>
+              </div>
+              <div class="two-col">
+                <div class="card">
+                  <div class="card-head"><i class="fa-regular fa-chart-bar card-icon"></i><span>Score distribution</span></div>
+                  <div class="chart-wrap" style="height:200px"><canvas id="distChart" role="img" aria-label="Score distribution histogram"></canvas></div>
+                </div>
+                <div class="card">
+                  <div class="card-head"><i class="fa-regular fa-ranking-star card-icon"></i><span>Per-class performance</span></div>
+                  <div class="chart-wrap" style="height:200px"><canvas id="classChart" role="img" aria-label="Per-class precision recall F1"></canvas></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="subtabs">
+                  <button class="subtab active" onclick="setSubtab('fp',this)"><i class="fa-regular fa-circle-xmark"></i> False positives (Human→AI)</button>
+                  <button class="subtab" onclick="setSubtab('fn',this)"><i class="fa-regular fa-circle-check"></i> False negatives (AI→Human)</button>
+                </div>
+                <div id="tab-fp" class="subtab-content active"><div id="fp-list"></div></div>
+                <div id="tab-fn" class="subtab-content" style="display:none"><div id="fn-list"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== REPORTS PAGE ========== -->
+        <div class="page" id="page-reports" style="display:none">
+          <div class="page-header">
+            <h1>Analysis Reports</h1>
+            <p>All detection sessions and exported evaluation reports</p>
+          </div>
+          <div class="reports-toolbar">
+            <div class="search-box">
+              <i class="fa-regular fa-magnifying-glass"></i>
+              <input type="text" placeholder="Search reports…" oninput="filterReports(this.value)" />
+            </div>
+            <button class="btn-sm btn-sm-primary" onclick="exportAllReports()">
+              <i class="fa-regular fa-download"></i> Export JSON
+            </button>
+          </div>
+          <div id="report-list"></div>
+        </div>
+
+        <!-- ========== ABOUT PAGE ========== -->
+        <div class="page" id="page-about" style="display:none">
+          <div class="page-header">
+            <h1>About DetectLens</h1>
+            <p>Research-grade AI text detection platform</p>
+          </div>
+          <div class="about-grid">
+            <div class="card about-card">
+              <div class="about-icon"><i class="fa-regular fa-layer-group"></i></div>
+              <h3>Ensemble architecture</h3>
+              <p>Four complementary detectors combined via learned weights:</p>
+              <div class="weight-list">
+                <div class="weight-row"><span>DetectLLM</span><div class="weight-bar-bg"><div class="weight-bar-fill" style="width:35%"></div></div><span class="weight-pct">35%</span></div>
+                <div class="weight-row"><span>Binoculars</span><div class="weight-bar-bg"><div class="weight-bar-fill" style="width:30%"></div></div><span class="weight-pct">30%</span></div>
+                <div class="weight-row"><span>FastDetectGPT</span><div class="weight-bar-bg"><div class="weight-bar-fill" style="width:20%"></div></div><span class="weight-pct">20%</span></div>
+                <div class="weight-row"><span>Stylometrics</span><div class="weight-bar-bg"><div class="weight-bar-fill" style="width:15%"></div></div><span class="weight-pct">15%</span></div>
+              </div>
+            </div>
+            <div class="card about-card">
+              <div class="about-icon"><i class="fa-regular fa-flask"></i></div>
+              <h3>Stylometric features</h3>
+              <ul class="feature-list">
+                <li>Average sentence length</li>
+                <li>Type-token ratio (TTR)</li>
+                <li>Burstiness index</li>
+                <li>Perplexity estimation</li>
+                <li>Shannon entropy</li>
+                <li>POS distribution</li>
+                <li>Readability scores</li>
+                <li>Lexical diversity</li>
+              </ul>
+            </div>
+            <div class="card about-card">
+              <div class="about-icon"><i class="fa-regular fa-triangle-exclamation"></i></div>
+              <h3>Limitations</h3>
+              <p>No detector achieves perfect accuracy. Modern LLMs produce increasingly human-like output, causing irreducible error rates. This platform is designed for research evaluation—not adjudication. Results should be interpreted with epistemic humility.</p>
+            </div>
+            <div class="card about-card">
+              <div class="about-icon"><i class="fa-regular fa-code"></i></div>
+              <h3>Tech stack</h3>
+              <div class="tech-tags">
+                <span class="tech-tag">HTML5</span><span class="tech-tag">CSS3</span><span class="tech-tag">JavaScript</span>
+                <span class="tech-tag">Chart.js</span><span class="tech-tag">PapaParse</span>
+                <span class="tech-tag">Python</span><span class="tech-tag">FastAPI</span>
+                <span class="tech-tag">scikit-learn</span><span class="tech-tag">NLTK</span>
+                <span class="tech-tag">spaCy</span><span class="tech-tag">PostgreSQL</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
